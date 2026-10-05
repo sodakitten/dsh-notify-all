@@ -145,7 +145,7 @@ const intervals=new Set();
 const sandbox={window:{...fakeTarget,__ModuleLoader__:{load:row=>{exported=row.factory(id=>{assert.equal(id,'react');return {};});}}},
   document:{...fakeTarget,hidden:false,hasFocus:()=>true},crypto:{randomUUID:()=> 'test-client'},
   fetch:async(url,init)=>{requests.push([url,init]);return{ok:true,json:async()=>({})};},
-  setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),Date,Math};
+  setInterval:fn=>{intervals.add(fn);return fn;},clearInterval:fn=>intervals.delete(fn),setTimeout,clearTimeout,AbortController,Date,Math};
 vm.runInNewContext(fs.readFileSync(new URL('../lib/client.js',import.meta.url),'utf8'),sandbox);
 const tracker=exported.trackViewer({uiSession:{current},layout:{panelInfo:panel},sessions:{list},effect:fn=>disposers.push(fn()),on:()=>{}});
 await new Promise(r=>setImmediate(r));

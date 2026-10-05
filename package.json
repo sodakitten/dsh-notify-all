@@ -9,11 +9,11 @@
   "bugs": {
     "url": "https://github.com/sodakitten/dsh-notify-all/issues"
   },
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node tests/regression-test.mjs && node tests/session-menu-test.mjs",
+    "test": "node tests/regression-test.mjs && node tests/session-menu-test.mjs && node tests/unread-concurrency-test.mjs",
     "test:native": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/native-regression.ps1"
   },
   "exports": {

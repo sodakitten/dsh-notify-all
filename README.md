@@ -1,4 +1,4 @@
-# DSH 通知与角标 0.2.2
+# DSH 通知与角标 0.2.3
 
 源码和问题反馈：[sodakitten/dsh-notify-all](https://github.com/sodakitten/dsh-notify-all)。
 
@@ -29,6 +29,14 @@ DSH 0.2.1-alpha.1 尚未完成兼容性验证；通知点击跳转需要官方�
 
 会话链接只携带会话 ID，没有点击令牌或认证参数，只允许导航。它是本机链接：目标电脑需要安装此插件，并在相应 desktop profile 中存在该会话；它不是在线分享地址，也不会上传对话。更新插件后完全退出并启动 DSH，才能注册支持此链接的新 GUI 助手。剪贴板不可用时，插件提供可手动选择复制的文本。
 
+## 0.2.3 更新
+
+- 四个菜单操作成功后均不显示浮动提示，包括「会话ID已复制」。操作失败仍显示错误；剪贴板写入失败时保留可手动复制的文本。
+- 手动未读使用官方 `sidebar.session.row.leading` 插槽显示静止蓝点，重新打开菜单可看到「已标记为未读」。状态直接从 Host 响应更新，其他窗口或已读操作在心跳中同步；旧响应不会覆盖刚完成的标记。
+- DSH 原生的进行中、待处理和完成指示优先于未读蓝点；运行中的会话仍显示原生转圈，实际结束后由 DSH 更新。插件不会把未读状态写入会话的运行状态，也不会在仍有工作时强制隐藏转圈。
+- 标记运行中或已加载的会话，直接检查官方 Host `sessions` 名册，避免等待全部持久化会话的查询。未加载会话的校验最多等待 5 秒，支持请求取消和插件卸载取消，超时后不再写入迟到的结果。
+- Client 请求最多等待 8 秒，即使传输没有响应，查看会话的报告队列也能恢复并发送最新选择。慢查询不阻塞其他会话的未读操作。
+
 菜单使用 `sidebar.workspaces.session.menu.item` 官方插槽及原生菜单开关 Hook；按钮自行实现 DSH 的主题 token、间距、`role=menuitem` 和键盘焦点样式，只导入 React。没有修改 DSH 安装文件或替换原有菜单。手动未读同时提供 `dsh_notify_mark_unread` 智能体工具，与菜单调用同一 Host 操作。
 
 ## 0.2.1 更新
@@ -58,7 +66,7 @@ dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all"
 更新推荐使用带版本号的独立 TGZ，避免复用同一个目录依赖时仍加载缓存中的旧包：
 
 ```powershell
-dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.2.tgz"
+dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.3.tgz"
 ```
 
 路径是示例，请替换为实际位置。开发者可在仓库中运行 `npm pack` 生成 TGZ。
@@ -127,9 +135,10 @@ npm run test:native
 ```
 
 `tests/regression-test.mjs` 驱动真实 Host/Client 代码，使用模拟的公开服务接口，覆盖会话切换、去重、等待请求、PTC 子调用、恢复、关闭提醒、持久化、点击校验、官方导航和清理，不发送系统通知。
+`tests/unread-concurrency-test.mjs` 覆盖运行中标记、互不阻塞的操作、真实超时、取消后迟到结果、查看报告恢复、静止圆点、静默成功和卸载清理。
 `tests/native-regression.ps1` 需要 Windows，禁用实际绘制和通知，检查真实 COM、状态文件和助手退出。COM 返回成功仅证明接口接受调用，不能替代通知图标、实际跳转及任务栏数字的视觉检查。
 
-0.2.2 已通过 104 项 Host/Client 检查和 25 项 Windows 原生检查，包括会话菜单动作、当前会话静默未读、焦点和设置覆盖、切换合并、剪贴板失败、不存在的会话，以及 Host/C# 两端共同的链接校验用例。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
+0.2.3 已通过 133 项 Host/Client 检查和 25 项 Windows 原生检查，包括会话菜单动作、当前会话静默未读、焦点和设置覆盖、切换合并、剪贴板失败、不存在的会话，以及 Host/C# 两端共同的链接校验用例。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
 
 点击助手的 C# 源码位于 `scripts/activate.cs`，首次启用时由 Windows 自带编译器生成 GUI 子系统 EXE，保存在 DSH 运行数据目录，不把机器生成的 EXE 或点击令牌提交到仓库。
 

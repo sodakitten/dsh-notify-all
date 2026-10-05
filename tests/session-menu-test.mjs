@@ -79,10 +79,11 @@ try {
  check('public copied link reaches exact conversation through existing inbox',()=>assert.equal(click.data.activation.sessionId,B));
 
  let exported;const copied=[],opened=[],posts=[],notes=[],menuChanges=[];
- const fakeReact={Fragment:'fragment',createElement:(type,props,...children)=>({type,props:props??{},children})};
+ const fakeReact={Fragment:'fragment',createElement:(type,props,...children)=>({type,props:props??{},children}),useSyncExternalStore:(_subscribe,getSnapshot)=>getSnapshot()};
  const sandbox={window:{__ModuleLoader__:{load:row=>{exported=row.factory(name=>{assert.equal(name,'react');return fakeReact;});}}},
   navigator:{clipboard:{writeText:async text=>copied.push(text)}},
   fetch:async(url,init)=>{posts.push({url,body:JSON.parse(init.body)});return{ok:true,json:async()=>({})};},
+  setTimeout,clearTimeout,AbortController,
  };
  vm.runInNewContext(fs.readFileSync(new URL('../lib/client.js',import.meta.url),'utf8'),sandbox);
  // DSH's dynamic Client Context separately guards the Remote root and namespace.
@@ -91,7 +92,8 @@ try {
    {get:(target,key)=>{if(key==='remote'&&!exported.inject.includes('remote'))throw new Error('Remote root not injected');return target[key];}});
  const actions=exported.menuActions(clientCtx,
    {selection:()=>({clientId:'test',selectedSessionId:A,viewEpoch:9})},{show:(...args)=>notes.push(args)},key=>key);
- const tree=exported.SessionMenuActions({sessionId:B,useMenuOpenState:()=>[true,value=>menuChanges.push(value)],actions,t:key=>key});
+ const store={getSnapshot:()=>new Map(),subscribe:()=>()=>{}};
+ const tree=exported.SessionMenuActions({sessionId:B,useMenuOpenState:()=>[true,value=>menuChanges.push(value)],actions,t:key=>key,store});
  const all=[];function walk(node){if(Array.isArray(node))node.forEach(walk);else if(node&&typeof node==='object'){all.push(node);walk(node.children);}}walk(tree);
  const buttons=all.filter(x=>x.type==='button');
  check('native slot renders four accessible menu items in requested order',()=>assert.deepEqual(buttons.map(x=>x.children[1].children[0]),['openFolder','markUnread','copyId','copyLink']));
@@ -102,6 +104,7 @@ try {
  check('mark unread sends row ID and viewer revision separately',()=>{assert.equal(posts[0].body.sessionId,B);assert.equal(posts[0].body.selectedSessionId,A);assert.equal(posts[0].body.viewEpoch,9);});
  check('copy ID uses selected row exact ID',()=>assert.equal(copied[0],B));
  check('copy link carries only session ID and no private key',()=>assert.equal(copied[1],'dsh-notify-all://session/'+B));
+ check('successful menu actions show no floating feedback',()=>assert.equal(notes.length,0));
  sandbox.navigator.clipboard.writeText=async()=>{throw new Error('denied');};await actions.copyId(B);
  check('clipboard failure offers selectable text in plugin feedback',()=>{assert.equal(notes.at(-1)[0],'copyFailed');assert.equal(notes.at(-1)[2],B);});
  await actions.openFolder('missing');
