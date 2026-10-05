@@ -45,7 +45,7 @@ const server=http.createServer(async(req,res)=>{
  if(url.pathname==='/client.js'){res.setHeader('content-type','text/javascript');res.end(client);return;}
  const dark=url.searchParams.get('dark')==='true';
  res.setHeader('content-type','text/html; charset=utf-8');res.end(`<!doctype html><html><head><style>${nativeCss}${css}
- :root{--dsw-alias-bg-layer-1:${dark?'#222630':'#f8fafc'};--dsw-alias-bg-layer-2:${dark?'#1c2028':'#fff'};--dsw-alias-bg-base:${dark?'#141820':'#fff'};--dsw-alias-label-primary:${dark?'#e8ebef':'#171b21'};--dsw-alias-label-secondary:${dark?'#b9bec6':'#647080'};--dsw-alias-border-l2:${dark?'#3c424f':'#dce0e8'};--dsw-alias-border-l4:${dark?'#596170':'#b9bec6'};--dsw-alias-border-focusring:#517bde;--dsw-alias-brand-primary-new-colorprimary-new-color:${dark?'#7a9aff':'#416dd3'};--dsw-radius-lg:12px;--dsw-radius-md:6px;--dsw-elevation-panel:0 4px 16px #0002;--dsh-conversation-viewport-height:700px;--dsh-composer-height:152px;--dsh-composer-side-clearance:0px}
+ :root{--dsw-alias-bg-layer-1:${dark?'#222630':'#f8fafc'};--dsw-alias-bg-layer-2:${dark?'rgba(28,32,40,.8)':'rgba(255,255,255,.8)'};--dsw-alias-bg-base:${dark?'#141820':'#fff'};--dsw-alias-label-primary:${dark?'#e8ebef':'#171b21'};--dsw-alias-label-secondary:${dark?'#b9bec6':'#647080'};--dsw-alias-border-l2:${dark?'#3c424f':'#dce0e8'};--dsw-alias-border-l4:${dark?'#596170':'#b9bec6'};--dsw-alias-border-focusring:#517bde;--dsw-alias-brand-primary-new-colorprimary-new-color:${dark?'#7a9aff':'#416dd3'};--dsw-radius-lg:12px;--dsw-radius-md:6px;--dsw-elevation-panel:0 4px 16px #0002;--dsh-conversation-viewport-height:700px;--dsh-composer-height:152px;--dsh-composer-side-clearance:0px}
  body{margin:0;background:${dark?'#202830':'#e8dce3'};font:13px/20px sans-serif}.xpvNua_slot{width:100%;box-sizing:border-box}.xpvNua_mark[aria-busy=true]:before{animation:xpvNua_dsh-turn-mark-busy 1s infinite}.xpvNua_previewPrompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xpvNua_previewResponse{line-height:18px}.dna-milestone-controls button:disabled{opacity:.5}
  </style></head><body><div id=root></div><script>window.__ModuleLoader__={load:row=>window.plugin=row.factory(()=>window.React)};</script><script src=/bundle.js></script><script src=/client.js></script><script>boot();</script></body></html>`);
 });
@@ -63,7 +63,9 @@ const server=http.createServer(async(req,res)=>{
   const button=page.getByRole('button',{name:'设为里程碑',exact:true}),box=await button.boundingBox(),m=await mark().boundingBox();
   await page.mouse.move(m.x+m.width/2,m.y+m.height/2);await page.mouse.move(box.x+box.width/2,box.y+box.height/2,{steps:20});
   check('moving across native 10px gap keeps hover action reachable',await button.isVisible());
-  await button.click();await page.getByRole('textbox',{name:'里程碑名称'}).fill('交付完成');await page.getByRole('button',{name:'保存',exact:true}).click();await page.waitForSelector('[data-dna-milestone]');
+  await button.click();
+  check('naming dialog has an opaque theme surface despite translucent wallpaper tokens',await page.getByRole('dialog').evaluate(el=>{const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');ctx.fillStyle=getComputedStyle(el).backgroundColor;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].join(',')==='255,255,255,255';}));
+  await page.getByRole('textbox',{name:'里程碑名称'}).fill('交付完成');await page.getByRole('button',{name:'保存',exact:true}).click();await page.waitForSelector('[data-dna-milestone]');
   assert.equal(writes.at(-1).turn,82,JSON.stringify(writes.at(-1)));
   check('save highlights real turn 82 rather than visible index 20',writes.at(-1).turn===82 && writes.at(-1).seq===2000);
   check('saving closes naming dialog',await page.getByRole('dialog').count()===0);

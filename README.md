@@ -155,7 +155,7 @@ npm run test:native
 浏览器开发检查需要另行准备 Playwright、React、React DOM、esbuild 和 rc.2 的 `TurnNavigator` CSS。通过 `DSH_NOTIFY_BROWSER_TEST_DEPS` 指定包含后三个 JS 包的 node_modules，`DSH_NOTIFY_PLAYWRIGHT` 指向 Playwright 模块，`DSH_NOTIFY_TURN_CSS` 指向参考 CSS，然后执行 `node tests/milestones-browser-test.cjs`。使用 Node.js 20 或更新版本；开发依赖和参考资源均不打包进插件。
 `tests/native-regression.ps1` 需要 Windows，禁用实际绘制和通知，检查真实 COM、状态文件和助手退出。COM 返回成功仅证明接口接受调用，不能替代通知图标、实际跳转及任务栏数字的视觉检查。
 
-0.3.0 已通过 180 项 Host/Client 检查、21 项原生样式浏览器夹具检查和 25 项 Windows 原生检查，包括里程碑和此前所有会话菜单、未读并发、通知点击回归。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
+0.3.0 已通过 180 项 Host/Client 检查、22 项原生样式浏览器夹具检查和 25 项 Windows 原生检查，包括里程碑和此前所有会话菜单、未读并发、通知点击回归。已在真实 Windows DSH 中确认悬浮入口、真实第 129 轮的命名窗和取消，检查前后未读文件一致，未创建测试里程碑。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
 
 点击助手的 C# 源码位于 `scripts/activate.cs`，首次启用时由 Windows 自带编译器生成 GUI 子系统 EXE，保存在 DSH 运行数据目录，不把机器生成的 EXE 或点击令牌提交到仓库。
 
