@@ -1,4 +1,4 @@
-# DSH 通知与角标 0.2.1
+# DSH 通知与角标 0.2.2
 
 源码和问题反馈：[sodakitten/dsh-notify-all](https://github.com/sodakitten/dsh-notify-all)。
 
@@ -6,13 +6,30 @@ Windows 桌面端插件，针对 DeepSeek Harness 0.2.0-rc.2 的已安装接口�
 DSH 0.2.1-alpha.1 尚未完成兼容性验证；通知点击跳转需要官方桌面端的 `dsh://open` 协议。
 
 任务完成、失败、中止、受阻，以及提问、审批和计划确认时发送系统通知。
-任务栏数字等于“未读结束事件 + 尚待处理的请求”。打开某个会话只清除该会话的未读；提问、审批、计划需处理后才减少。其他会话在 DSH 前台结束仍会计数。同一个持久化结束事件只计算一次。
+任务栏数字等于“未读结束事件（或手动未读）+ 尚待处理的请求”。打开某个会话只清除该会话的未读；提问、审批、计划需处理后才减少。其他会话在 DSH 前台结束仍会计数。同一个持久化结束事件只计算一次。
 
 设置入口：账号菜单 → 设置 → 通知与角标。支持红色/黑色数字底色、声音、Windows 通知、任务栏数字和各类提醒开关；点击通知可选择唤起桌面端或打开网页端。额外插件托盘图标默认关闭。页面没有右下角浮动栏。
 
 0.2.1 的通知拥有独立发送身份 DeepSeekHarness.NotifyAll，显示 DSH 的名称与鲸鱼图标，不更改 PowerShell 的通知身份、图标或偏好。点击单会话通知会打开对应对话；合并通知打开合并批次中的最后一个会话。
 
-点击由源码编译的 Windows GUI 程序处理，启动链路不运行 PowerShell 控制台。它经 DSH 自带 dsh://open 唤起应用，再由客户端调用公开的 uiWorkspace.openSession。会话目标仅通过带随机令牌的本地点击收件箱传递；验证选中目标会话后才确认消费。网页目标使用插件自己的 URL 片段，通过同一个官方导航服务定位。
+点击由源码编译的 Windows GUI 程序处理，启动链路不运行 PowerShell 控制台。它经 DSH 自带 dsh://open 唤起应用，再由客户端调用公开的 uiWorkspace.openSession。系统通知使用带随机令牌的本地点击收件箱；验证选中目标会话后才确认消费。网页目标使用插件自己的 URL 片段，通过同一个官方导航服务定位。
+
+## 会话菜单（0.2.2）
+
+侧边栏会话的「…」菜单保留置顶、重命名、分叉、归档等原有项目，并追加：
+
+| 项目 | 行为 |
+|---|---|
+| 在资源管理器中打开 | 打开该菜单所属会话的工作目录，经官方 `remote.session.openWorkspacePath` 验证路径；没有目录或打开失败时显示错误。 |
+| 标记为未读 | 至少保留一个任务栏未读数字，不发送系统通知、不播放通知声音。重复标记不累加；已有多个未读完成事件时保留原计数。 |
+| 复制会话ID | 复制该会话的真实 Session ID。 |
+| 复制会话链接 | 复制 `dsh-notify-all://session/session-UUID`，在本机唤起 DSH 并打开该会话。 |
+
+当前正在看的会话也能标记未读。数字保留到切换到别的会话后重新打开，或在设置中点击「全部标记已读」；心跳、窗口焦点变化、打开和关闭设置均不清除它。「切回窗口清空全部未读」也保留手动未读。等待回答、审批、计划确认的数字仍需处理后消失。数字显示受「启用插件」和「任务栏数字角标」设置控制。
+
+会话链接只携带会话 ID，没有点击令牌或认证参数，只允许导航。它是本机链接：目标电脑需要安装此插件，并在相应 desktop profile 中存在该会话；它不是在线分享地址，也不会上传对话。更新插件后完全退出并启动 DSH，才能注册支持此链接的新 GUI 助手。剪贴板不可用时，插件提供可手动选择复制的文本。
+
+菜单使用 `sidebar.workspaces.session.menu.item` 官方插槽及原生菜单开关 Hook；按钮自行实现 DSH 的主题 token、间距、`role=menuitem` 和键盘焦点样式，只导入 React。没有修改 DSH 安装文件或替换原有菜单。手动未读同时提供 `dsh_notify_mark_unread` 智能体工具，与菜单调用同一 Host 操作。
 
 ## 0.2.1 更新
 
@@ -41,7 +58,7 @@ dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all"
 更新推荐使用带版本号的独立 TGZ，避免复用同一个目录依赖时仍加载缓存中的旧包：
 
 ```powershell
-dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.1.tgz"
+dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.2.tgz"
 ```
 
 路径是示例，请替换为实际位置。开发者可在仓库中运行 `npm pack` 生成 TGZ。
@@ -94,7 +111,7 @@ dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.1.tgz"
 - native-status.json：hwnd、hresult、count、color、via。hresult 为 0 表示接口接受调用，不等同于已肉眼验证桌面显示。
 - state.json：未读、等待请求及事件去重数据；重启保留。
 - badge.json：原生助手状态；settings-migrated.json：一次性设置迁移记录。
-- native-identity.json、dsh.png、activate-0.2.1-*.exe：独立通知身份与无控制台入口。
+- native-identity.json、dsh.png、activate-0.2.2-*.exe：独立通知身份与无控制台入口。
 - activation-key.txt、activation-inbox、activation.log：点击令牌、点击消息及错误。不要公开令牌。
 
 没有系统通知时检查 Windows 的“DeepSeek Harness”通知权限和勿扰模式，以及 log.txt 中 native notification setup 的返回值。插件注册独立 AppUserModelID、带该 ID 的用户开始菜单快捷方式以及插件自己的协议，不修改 DSH 原有协议或 PowerShell 注册项。浏览器目标依赖 DSH WebServer 服务，不可用时回退桌面端。角标需要 Windows 的常规任务栏按钮，系统的小图标/任务栏策略可能抑制显示。
@@ -112,7 +129,7 @@ npm run test:native
 `tests/regression-test.mjs` 驱动真实 Host/Client 代码，使用模拟的公开服务接口，覆盖会话切换、去重、等待请求、PTC 子调用、恢复、关闭提醒、持久化、点击校验、官方导航和清理，不发送系统通知。
 `tests/native-regression.ps1` 需要 Windows，禁用实际绘制和通知，检查真实 COM、状态文件和助手退出。COM 返回成功仅证明接口接受调用，不能替代通知图标、实际跳转及任务栏数字的视觉检查。
 
-0.2.1 已通过 52 项 Host/Client 回归检查和 5 项 Windows 原生助手检查。
+0.2.2 已通过 104 项 Host/Client 检查和 25 项 Windows 原生检查，包括会话菜单动作、当前会话静默未读、焦点和设置覆盖、切换合并、剪贴板失败、不存在的会话，以及 Host/C# 两端共同的链接校验用例。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
 
 点击助手的 C# 源码位于 `scripts/activate.cs`，首次启用时由 Windows 自带编译器生成 GUI 子系统 EXE，保存在 DSH 运行数据目录，不把机器生成的 EXE 或点击令牌提交到仓库。
 

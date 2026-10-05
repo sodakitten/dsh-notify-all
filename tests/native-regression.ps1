@@ -19,6 +19,24 @@ function Await-State($count) {
 }
 $proc = $null
 try {
+  $launcher = Join-Path $testDir 'activation-test.exe'
+  Add-Type -Path (Join-Path $PSScriptRoot '..\scripts\activate.cs') -ReferencedAssemblies 'System.dll','System.Drawing.dll' -OutputAssembly $launcher -OutputType WindowsApplication
+  [void][Reflection.Assembly]::Load([IO.File]::ReadAllBytes($launcher))
+  $peBytes = [IO.File]::ReadAllBytes($launcher)
+  $peOffset = [BitConverter]::ToInt32($peBytes,60)
+  if ([BitConverter]::ToUInt16($peBytes,$peOffset+4+20+68) -ne 2) { throw 'Activation helper is not a Windows GUI executable' }
+  Write-Output 'PASS activation helper uses GUI subsystem, with no console'
+  $cases = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'activation-cases.json') -Raw | ConvertFrom-Json
+  $sessionId = 'session-00000000-0000-4000-8000-000000000001'
+  $key = 'a' * 48
+  foreach ($case in $cases) {
+    $address = $case.uri.Replace('{SID}',$sessionId).Replace('{KEY}',$key)
+    $selected = $null
+    $accepted = [DshNotifyActivation.Program]::TryActivation($address,$key,[ref]$selected)
+    if ($accepted -ne $case.valid) { throw ('Native activation mismatch: ' + $case.name) }
+    if ($accepted -and $case.session -and $selected -ne $sessionId) { throw 'Native activation selected wrong session' }
+    Write-Output ('PASS native activation: ' + $case.name)
+  }
   Write-State 3 '#E62B34' $false
   $payload = @{dir=$testDir; watchPid=$PID; mutex=('dsh-native-test-' + [Guid]::NewGuid()); overlay=$false; trayIcon=$false}
   $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($payload | ConvertTo-Json -Compress)))

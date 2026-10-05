@@ -1,0 +1,21 @@
+[
+  {"name":"public session link","uri":"dsh-notify-all://session/{SID}","valid":true,"session":true},
+  {"name":"keyed notification","uri":"dsh-notify-all://open?key={KEY}&session={SID}","valid":true,"session":true},
+  {"name":"keyed main window","uri":"dsh-notify-all://open?key={KEY}","valid":true,"session":false},
+  {"name":"wrong key","uri":"dsh-notify-all://open?key=wrong&session={SID}","valid":false},
+  {"name":"keyless notification route","uri":"dsh-notify-all://open?session={SID}","valid":false},
+  {"name":"extra public query","uri":"dsh-notify-all://session/{SID}?key={KEY}","valid":false},
+  {"name":"public fragment","uri":"dsh-notify-all://session/{SID}#action","valid":false},
+  {"name":"public credential","uri":"dsh-notify-all://user@session/{SID}","valid":false},
+  {"name":"public port","uri":"dsh-notify-all://session:123/{SID}","valid":false},
+  {"name":"invalid UUID","uri":"dsh-notify-all://session/session-------------------------------------","valid":false},
+  {"name":"trailing path","uri":"dsh-notify-all://session/{SID}/","valid":false},
+  {"name":"encoded ID","uri":"dsh-notify-all://session/%73ession-00000000-0000-4000-8000-000000000001","valid":false},
+  {"name":"arbitrary action","uri":"dsh-notify-all://delete/{SID}","valid":false},
+  {"name":"external protocol","uri":"https://session/{SID}","valid":false},
+  {"name":"duplicate key","uri":"dsh-notify-all://open?key={KEY}&key={KEY}","valid":false},
+  {"name":"duplicate session","uri":"dsh-notify-all://open?key={KEY}&session={SID}&session={SID}","valid":false},
+  {"name":"unknown keyed action","uri":"dsh-notify-all://open?key={KEY}&action=delete","valid":false},
+  {"name":"invalid keyed ID","uri":"dsh-notify-all://open?key={KEY}&session=broken","valid":false},
+  {"name":"newline keyed ID","uri":"dsh-notify-all://open?key={KEY}&session={SID}%0A","valid":false}
+]

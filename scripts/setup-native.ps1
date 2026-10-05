@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $cfg = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Payload)) | ConvertFrom-Json
 $source = Join-Path $PSScriptRoot 'activate.cs'
 $sourceId = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.Substring(0,12).ToLowerInvariant()
-$launcher = Join-Path $cfg.dir ('activate-0.2.1-' + $sourceId + '.exe')
+$launcher = Join-Path $cfg.dir ('activate-0.2.2-' + $sourceId + '.exe')
 if (-not (Test-Path -LiteralPath $launcher)) {
   Add-Type -Path $source -ReferencedAssemblies 'System.dll','System.Drawing.dll' -OutputAssembly $launcher -OutputType WindowsApplication
 }

@@ -154,10 +154,14 @@ panel.value={activePanelId:'settings'};subscriptions.forEach(fn=>fn());await new
 check('settings panel does not mark hidden conversation as viewed',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).sessionId,null));
 panel.value={activePanelId:null};current.value={key:'a'};subscriptions.forEach(fn=>fn());await new Promise(r=>setImmediate(r));
 check('session changes report without clicking DOM text',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).sessionId,'a'));
+check('session switch advances viewer revision',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).viewEpoch,1));
 tracker.setCovered(true);await new Promise(r=>setImmediate(r));
 check('native settings dialog cannot mark covered conversation as read',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).sessionId,null));
+check('settings cover preserves selected session and revision',()=>{const v=JSON.parse(requests.at(-1)[1].body);assert.equal(v.selectedSessionId,'a');assert.equal(v.viewEpoch,1);});
 tracker.setCovered(false);await new Promise(r=>setImmediate(r));
 check('closing native settings resumes the current conversation report',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).sessionId,'a'));
+current.value={key:'b'};subscriptions.forEach(fn=>fn());current.value={key:'a'};subscriptions.forEach(fn=>fn());await new Promise(r=>setImmediate(r));
+check('coalesced leave-and-return keeps an advanced revision',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).viewEpoch,3));
 disposers.reverse().forEach(fn=>fn());
 check('client unload clears timers, subscriptions and event listeners',()=>{assert.equal(intervals.size,0);assert.equal(subscriptions.length,0);assert.equal(listeners.length,0);});
 check('no body injection or floating pill remains',()=>assert.ok(!fs.readFileSync(new URL('../lib/client.js',import.meta.url),'utf8').includes('appendChild')));

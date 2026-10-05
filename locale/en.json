@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Notifications & badges",
-    "description": "Desktop notifications and per-conversation Windows taskbar badges."
+    "description": "Desktop notifications, taskbar badges and conversation actions: open workspace, silently mark unread, copy ID or link."
   }
 }

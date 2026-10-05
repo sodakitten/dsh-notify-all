@@ -7,25 +7,45 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace DshNotifyActivation {
     public static class Program {
+        private static bool ValidSession(string id) {
+            return id != null && Regex.IsMatch(id, "\\Asession-[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}\\z");
+        }
+        public static bool TryActivation(string address, string key, out string sessionId) {
+            sessionId = null;
+            Uri uri;
+            if (address == null || address.Length > 8192 || !Uri.TryCreate(address, UriKind.Absolute, out uri) ||
+                uri.Scheme != "dsh-notify-all" || uri.UserInfo.Length != 0 || !uri.IsDefaultPort || uri.Fragment.Length != 0) return false;
+            if (uri.Host == "session") {
+                string id = uri.AbsolutePath.TrimStart('/');
+                if (!ValidSession(id) || address != "dsh-notify-all://session/" + id) return false;
+                sessionId = id; return true;
+            }
+            if (uri.Host != "open" || (uri.AbsolutePath.Length != 0 && uri.AbsolutePath != "/")) return false;
+            string supplied = null, session = null;
+            foreach (string pair in uri.Query.TrimStart('?').Split('&')) {
+                int equal = pair.IndexOf('=');
+                if (equal <= 0) return false;
+                string name = pair.Substring(0,equal), value = Uri.UnescapeDataString(pair.Substring(equal+1));
+                if (name == "key" && supplied == null) supplied = value;
+                else if (name == "session" && session == null) session = value;
+                else return false;
+            }
+            if (key == null || key.Length < 32 || key != supplied || (session != null && !ValidSession(session))) return false;
+            sessionId = session; return true;
+        }
         [STAThread]
         public static int Main(string[] args) {
             string dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             try {
                 if (args.Length != 1 || args[0].Length > 8192) return 2;
-                Uri uri;
-                if (!Uri.TryCreate(args[0], UriKind.Absolute, out uri) || uri.Scheme != "dsh-notify-all") return 2;
                 string key = File.ReadAllText(Path.Combine(dir, "activation-key.txt"), Encoding.UTF8).Trim();
-                string query = uri.Query.TrimStart('?');
-                string supplied = "";
-                foreach (string pair in query.Split('&')) {
-                    int equal = pair.IndexOf('=');
-                    if (equal > 0 && pair.Substring(0, equal) == "key") supplied = Uri.UnescapeDataString(pair.Substring(equal + 1));
-                }
-                if (key.Length < 32 || key != supplied) return 3;
+                string sessionId;
+                if (!TryActivation(args[0],key,out sessionId)) return 3;
                 string inbox = Path.Combine(dir, "activation-inbox");
                 Directory.CreateDirectory(inbox);
                 string id = Guid.NewGuid().ToString("N");
