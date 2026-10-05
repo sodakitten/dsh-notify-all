@@ -1,0 +1,12 @@
+node_modules/
+*.tgz
+*.zip
+HANDOFF.md
+*.log
+.env
+.env.*
+activation-key.txt
+activation-inbox/
+native-identity.json
+state.json
+badge.json
