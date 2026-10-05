@@ -1,4 +1,4 @@
-# DSH 通知与角标 0.2.3
+# DSH 通知与角标 0.3.0
 
 源码和问题反馈：[sodakitten/dsh-notify-all](https://github.com/sodakitten/dsh-notify-all)。
 
@@ -49,6 +49,18 @@ DSH 0.2.1-alpha.1 尚未完成兼容性验证；通知点击跳转需要官方�
 
 发送通知和绘制角标的后台脚本仍通过隐藏进程运行；消除黑窗口针对的是通知点击的启动链路。
 
+## 对话里程碑（0.3.0）
+
+把鼠标移到对话右侧的轮次定位条，在原生悬浮卡片里点击「设为里程碑」，输入名称并保存。对应刻度使用 DSH 当前主题的强调色高亮，比普通刻度稍长、稍粗；点击刻度仍使用 DSH 原生跳转，也支持按需加载历史。
+
+已设置的卡片显示名称，并提供「重命名」「取消里程碑」。没有额外里程碑列表、会话顶部按钮或保存成功浮动提示。名称最多 80 个字符，每个会话最多 256 个标记。键盘用户可以先聚焦原生定位刻度，再按 `Alt+M` 打开命名窗；`Escape` 取消，`Tab` 在窗内移动焦点。
+
+标记按照真实 Session ID 和轮次保存到本机 `milestones.json`；历史已提供起始事件序号时也保存该锚点。切换会话、加载历史、定位条虚拟化和重启不会把可见刻度序号当成持久化身份。里程碑与通知状态独立，不写对话日志、不修改运行状态、不创建未读数字、不发送系统通知。分叉会话拥有不同 ID，不继承源会话的标记。
+
+DSH 0.2.0-rc.2 未给定位条和它的悬浮卡片提供扩展插槽，因此此处使用限定范围的 DOM 展示适配器：它只装饰原生定位条，并核对 DSH 的会话容器属性；轮次名册来自公开 `UiSession` 的 `chat` 和 `turnOutline` 快照。移动到悬浮卡片时保留原刻度，避免斜向移动经过相邻刻度而选错轮次。命名窗通过官方 `shell.overlay` 注册，跟随 DSH 主题。没有改动安装文件、替换 ChatView、读取 React 内部对象或修改原生导航回调。
+
+定位条本身受 DSH 的窗口宽度和对话视图控制；它未显示时不会另加替代列表。此 DOM 适配器针对已验证的 rc.2 结构，未来 DSH 修改结构时可能需要适配；通知和原有会话菜单仍使用各自官方接口。插件停用或卸载会清理标记样式、悬浮操作、键盘监听、观察器和订阅，已保存的元数据保留在本机。
+
 ## 安装与更新
 
 可从本仓库的 **Code → Download ZIP** 下载源码，解压到固定位置；或使用 Git：
@@ -66,7 +78,7 @@ dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all"
 更新推荐使用带版本号的独立 TGZ，避免复用同一个目录依赖时仍加载缓存中的旧包：
 
 ```powershell
-dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.3.tgz"
+dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.3.0.tgz"
 ```
 
 路径是示例，请替换为实际位置。开发者可在仓库中运行 `npm pack` 生成 TGZ。
@@ -101,7 +113,7 @@ dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.3.tgz"
 
 - Host 使用 Cordis session/event，并为每个设置声明 volatile Config。
 - Client 是 __ModuleLoader__ 的惰性模块，只导入 React；通过注入的服务读取 UiSession、Layout 和 Sessions。
-- 使用实际 Session ID 与窗口焦点，没有窗口标题匹配、最近发消息猜测或 DOM 抓取。
+- 通知与未读使用公开服务提供的实际 Session ID 与窗口焦点，没有窗口标题匹配或最近发消息猜测。里程碑的 DOM 展示适配范围和兼容边界见上文；不从会话正文猜测身份。
 - 设置页注册在 settings.section，使用 ConfigForms 的快照、订阅和保存队列，以及 DSH 主题 token、Locale 服务。
 - 状态与操作路由通过 Connection.fetch.register，沿用官方鉴权和浏览器来源检查。
 - 订阅、路由、计时器和原生助手均随插件卸载清理；助手监测宿主进程退出。
@@ -118,6 +130,7 @@ dsh plugin --profile desktop add "file:C:/plugins/dsh-notify-all-0.2.3.tgz"
 - tray.log：原生助手启动、窗口和接口调用。
 - native-status.json：hwnd、hresult、count、color、via。hresult 为 0 表示接口接受调用，不等同于已肉眼验证桌面显示。
 - state.json：未读、等待请求及事件去重数据；重启保留。
+- milestones.json：本机命名里程碑；与未读状态分开保存。
 - badge.json：原生助手状态；settings-migrated.json：一次性设置迁移记录。
 - native-identity.json、dsh.png、activate-0.2.2-*.exe：独立通知身份与无控制台入口。
 - activation-key.txt、activation-inbox、activation.log：点击令牌、点击消息及错误。不要公开令牌。
@@ -136,9 +149,13 @@ npm run test:native
 
 `tests/regression-test.mjs` 驱动真实 Host/Client 代码，使用模拟的公开服务接口，覆盖会话切换、去重、等待请求、PTC 子调用、恢复、关闭提醒、持久化、点击校验、官方导航和清理，不发送系统通知。
 `tests/unread-concurrency-test.mjs` 覆盖运行中标记、互不阻塞的操作、真实超时、取消后迟到结果、查看报告恢复、静止圆点、静默成功和卸载清理。
+`tests/milestones-test.mjs` 覆盖独立元数据、命名/重命名/删除、会话隔离、容量和非法输入、写入失败、取消、轮次合并、异步旧响应、插件停用及卸载；不发送通知。
+`tests/milestones-browser-test.cjs` 使用 React 和 rc.2 原生定位条样式/交互夹具，在真实 Chromium 中检查悬浮卡片操作、斜向移入按钮、编辑和键盘取消、明暗主题、原生点击/运行标记、虚拟刻度复用和清理。它不是桌面端视觉验收的替代品。
+
+浏览器开发检查需要另行准备 Playwright、React、React DOM、esbuild 和 rc.2 的 `TurnNavigator` CSS。通过 `DSH_NOTIFY_BROWSER_TEST_DEPS` 指定包含后三个 JS 包的 node_modules，`DSH_NOTIFY_PLAYWRIGHT` 指向 Playwright 模块，`DSH_NOTIFY_TURN_CSS` 指向参考 CSS，然后执行 `node tests/milestones-browser-test.cjs`。使用 Node.js 20 或更新版本；开发依赖和参考资源均不打包进插件。
 `tests/native-regression.ps1` 需要 Windows，禁用实际绘制和通知，检查真实 COM、状态文件和助手退出。COM 返回成功仅证明接口接受调用，不能替代通知图标、实际跳转及任务栏数字的视觉检查。
 
-0.2.3 已通过 133 项 Host/Client 检查和 25 项 Windows 原生检查，包括会话菜单动作、当前会话静默未读、焦点和设置覆盖、切换合并、剪贴板失败、不存在的会话，以及 Host/C# 两端共同的链接校验用例。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
+0.3.0 已通过 180 项 Host/Client 检查、21 项原生样式浏览器夹具检查和 25 项 Windows 原生检查，包括里程碑和此前所有会话菜单、未读并发、通知点击回归。原生检查编译 GUI 助手并检查 PE 子系统，避免把控制台 EXE 当成无黑窗口入口。
 
 点击助手的 C# 源码位于 `scripts/activate.cs`，首次启用时由 Windows 自带编译器生成 GUI 子系统 EXE，保存在 DSH 运行数据目录，不把机器生成的 EXE 或点击令牌提交到仓库。
 

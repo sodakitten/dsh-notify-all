@@ -1,6 +1,6 @@
 {
   "name": "dsh-notify-all",
-  "description": "Native DSH desktop notifications and per-conversation Windows taskbar badges",
+  "description": "Native DSH desktop notifications, taskbar badges and named conversation milestones",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sodakitten/dsh-notify-all.git"
@@ -9,11 +9,11 @@
   "bugs": {
     "url": "https://github.com/sodakitten/dsh-notify-all/issues"
   },
-  "version": "0.2.3",
+  "version": "0.3.0",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node tests/regression-test.mjs && node tests/session-menu-test.mjs && node tests/unread-concurrency-test.mjs",
+    "test": "node tests/regression-test.mjs && node tests/session-menu-test.mjs && node tests/unread-concurrency-test.mjs && node tests/milestones-test.mjs",
     "test:native": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tests/native-regression.ps1"
   },
   "exports": {
@@ -25,6 +25,7 @@
   "files": [
     "lib/index.js",
     "lib/client.js",
+    "lib/milestones.js",
     "scripts",
     "cordis.patch.yml",
     "locale",
@@ -42,7 +43,8 @@
         "@deepseek-ai/dsh-client-ui-session",
         "@deepseek-ai/dsh-client-ui-layout",
         "@deepseek-ai/dsh-client-ui-workspace",
-        "@deepseek-ai/dsh-api-session-controller"
+        "@deepseek-ai/dsh-api-session-controller",
+        "@deepseek-ai/dsh-client-ui-chat"
       ]
     }
   },
