@@ -1,6 +1,14 @@
 {
   "name": "dsh-notify-all",
   "description": "Native DSH desktop notifications and per-conversation Windows taskbar badges",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sodakitten/dsh-notify-all.git"
+  },
+  "homepage": "https://github.com/sodakitten/dsh-notify-all#readme",
+  "bugs": {
+    "url": "https://github.com/sodakitten/dsh-notify-all/issues"
+  },
   "version": "0.2.1",
   "type": "module",
   "main": "lib/index.js",

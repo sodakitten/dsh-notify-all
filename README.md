@@ -1,5 +1,7 @@
 # DSH 通知与角标 0.2.1
 
+源码和问题反馈：[sodakitten/dsh-notify-all](https://github.com/sodakitten/dsh-notify-all)。
+
 Windows 桌面端插件，针对 DeepSeek Harness 0.2.0-rc.2 的已安装接口实现。
 DSH 0.2.1-alpha.1 尚未完成兼容性验证；通知点击跳转需要官方桌面端的 `dsh://open` 协议。
 
@@ -23,6 +25,12 @@ DSH 0.2.1-alpha.1 尚未完成兼容性验证；通知点击跳转需要官方�
 发送通知和绘制角标的后台脚本仍通过隐藏进程运行；消除黑窗口针对的是通知点击的启动链路。
 
 ## 安装与更新
+
+可从本仓库的 **Code → Download ZIP** 下载源码，解压到固定位置；或使用 Git：
+
+```powershell
+git clone https://github.com/sodakitten/dsh-notify-all.git
+```
 
 先通过桌面端菜单的「管理 dsh 命令」安装 DSH 自带 CLI，首次安装可指定本包的绝对目录：
 
@@ -107,3 +115,7 @@ npm run test:native
 0.2.1 已通过 52 项 Host/Client 回归检查和 5 项 Windows 原生助手检查。
 
 点击助手的 C# 源码位于 `scripts/activate.cs`，首次启用时由 Windows 自带编译器生成 GUI 子系统 EXE，保存在 DSH 运行数据目录，不把机器生成的 EXE 或点击令牌提交到仓库。
+
+## 许可
+
+MIT，见 [LICENSE](./LICENSE)。
