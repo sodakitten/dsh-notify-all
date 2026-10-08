@@ -150,6 +150,7 @@ vm.runInNewContext(fs.readFileSync(new URL('../lib/client.js',import.meta.url),'
 const tracker=exported.trackViewer({uiSession:{current},layout:{panelInfo:panel},sessions:{list},effect:fn=>disposers.push(fn()),on:()=>{}});
 await new Promise(r=>setImmediate(r));
 check('client reports exact id from public UiSession binding',()=>assert.equal(JSON.parse(requests[0][1].body).sessionId,'b'));
+check('ordinary web client cannot claim desktop focus',()=>assert.equal(JSON.parse(requests[0][1].body).desktop,false));
 panel.value={activePanelId:'settings'};subscriptions.forEach(fn=>fn());await new Promise(r=>setImmediate(r));
 check('settings panel does not mark hidden conversation as viewed',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).sessionId,null));
 panel.value={activePanelId:null};current.value={key:'a'};subscriptions.forEach(fn=>fn());await new Promise(r=>setImmediate(r));
@@ -162,6 +163,8 @@ tracker.setCovered(false);await new Promise(r=>setImmediate(r));
 check('closing native settings resumes the current conversation report',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).sessionId,'a'));
 current.value={key:'b'};subscriptions.forEach(fn=>fn());current.value={key:'a'};subscriptions.forEach(fn=>fn());await new Promise(r=>setImmediate(r));
 check('coalesced leave-and-return keeps an advanced revision',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).viewEpoch,3));
+sandbox.window.dshDesktop={protocolVersion:1};subscriptions.forEach(fn=>fn());await new Promise(r=>setImmediate(r));
+check('native preload identifies the desktop viewer report',()=>assert.equal(JSON.parse(requests.at(-1)[1].body).desktop,true));
 disposers.reverse().forEach(fn=>fn());
 check('client unload clears timers, subscriptions and event listeners',()=>{assert.equal(intervals.size,0);assert.equal(subscriptions.length,0);assert.equal(listeners.length,0);});
 check('no body injection or floating pill remains',()=>assert.ok(!fs.readFileSync(new URL('../lib/client.js',import.meta.url),'utf8').includes('appendChild')));
